@@ -196,7 +196,7 @@ Win11Theme.exe
 Win11Theme.exe -ini "C:\ProgramData\Win11Theme\theme.ini"
 
 
-### Force re-run (App includes logic to only ever run one once. Marker in HKCU Software\Win11Theme\Completed )
+### Force re-run 
 
 
 Win11Theme.exe -force
