@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Win11Theme",
+      "type": "shell",
+      "command": "cl.exe",
+      "args": [
+        "/EHsc",
+        "/MT",
+        "/std:c++17",
+        "/DUNICODE",
+        "/D_UNICODE",
+        "/Fe:${workspaceFolder}\\Win11Theme.exe",
+        "${workspaceFolder}\\main.cpp",
+        "Shell32.lib",
+        "User32.lib",
+        "Advapi32.lib",
+        "Ole32.lib"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    }
+  ]
+}
