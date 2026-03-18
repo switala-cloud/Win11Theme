@@ -48,7 +48,72 @@ Standalone Windows 11 utility that applies Start menu and accent colours from a 
 - You may choose to use the HKCU\Software\Microsoft\Windows\CurrentVersion\Run to run every time. Be sure to set the -force switch in this scenario as a completed marker is added to HKCU\Software\Win11Theme. If a completed REG_DWORD exists it will immeditely exit before making any changes
 ---
 
-### What the Utility Does
+## ⚙️ Configuration (theme.ini)
+
+### Example `theme.ini`
+
+```ini
+[ExplorerAccent]
+AccentColorMenu=0xff7280fa
+StartColorMenu=0xff0000ff
+AccentPalette=ff,00,00,00,cc,00,00,00,99,00,00,00,66,00,00,00,44,00,00,00,22,00,00,00,11,00,00,00,ff,ff,ff
+UseNewAutoColorAccent=0x0
+
+[ThemesPersonalize]
+AppsUseLightTheme=0x1
+SystemUsesLightTheme=0x0
+ColorPrevalence=0x1
+EnableTransparency=0x0
+```
+
+### 🧾 INI Format Rules
+
+- All REG_DWORD values must be in hexadecimal format: 0x0, 0x1, 0xff7280fa
+- AccentPalette must be a comma-separated list of hex byte values
+- Blank or missing values are ignored
+- AccentPalette should align with the intended Start menu colour
+- SystemUsesLightTheme=0x0 is required for Start/taskbar accent colour (To be confirmed)
+
+### 📌 Supported Settings
+
+**[ExplorerAccent]**
+
+Registry path: HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent
+
+|Setting	               |Type	|Description                                     |
+|------------------------|---------|------------------------------------------------|
+|AccentColorMenu	     |DWORD	|Main accent colour (UI highlights)              |
+|StartColorMenu          |DWORD	|Start menu/taskbar colour override              |
+|AccentPalette	          |BINARY	|Colour gradient used by Start/taskbar           |
+|UseNewAutoColorAccent	|DWORD	|Disable automatic accent selection (set to 0)   |
+
+**[ThemesPersonalize]**
+
+Registry path:HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize
+
+|Setting	               |Type	|Description                                     |
+|------------------------|---------|------------------------------------------------|
+|AppsUseLightTheme	     |DWORD	|Light (1) or dark (0) app mode                  |
+|SystemUsesLightTheme	|DWORD	|Light (1) or dark (0) Windows shell             |
+|ColorPrevalence	     |DWORD	|Enables accent colour on Start/taskbar          |
+|EnableTransparency	     |DWORD	|Enables UI transparency effects                 |
+
+**[DWM]**
+
+Registry path:HKCU\Software\Microsoft\Windows\DWM
+
+|Setting	               |Type	|Description                                     |
+|------------------------|---------|------------------------------------------------|
+|AccentColor	          |DWORD	|Window border colour                            |
+|ColorizationAfterglow	|DWORD	|Glow/accent overlay                             |
+|ColorPrevalence	     |DWORD	|Enables window colour usage                     |
+|Composition	          |DWORD	|DWM composition setting                         |
+|EnableWindowColorization|DWORD	|Enables coloured window borders                 |
+|ColorizationColor	     |DWORD	|Base colour for window rendering                |
+|ColorizationColorBalance|DWORD	|Intensity of colour                             |
+
+⚠️ **Note: DWM settings can override or interfere with Start/taskbar colours.
+It is recommended to omit this section unless explicitly required.**
 
 ## 🧰 Development Prerequisites 
 
