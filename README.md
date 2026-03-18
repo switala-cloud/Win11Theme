@@ -1,7 +1,38 @@
 # Win11Theme
 Standalone Windows 11 utility that applies Start menu and accent colours from a configurable INI file. Designed for FSLogix and first-logon scenarios, with logging, idempotent execution, and optional force override. No PowerShell or external dependencies.
 
-## 🧰 Prerequisites to modify utility
+---
+
+## 🚩 Introduction
+
+### Windows 11 Limitations
+
+- Start menu and accent colour personalisation is **not inherited** from the default user profile (`NTUSER.dat`)
+- Group Policy (HKCU) does **not reliably apply** these settings during FSLogix profile creation
+- A manual Group Policy refresh is required, followed by **user logoff/logon** for changes to take effect
+- Results in inconsistent user experience and delayed theming application
+
+---
+
+## 🗺️ Practical Use
+
+### What the Utility Does
+
+- Applies Windows 11 **Start menu and taskbar colours** from a configurable INI file  
+- Sets **accent colours and theme settings** via HKCU registry  
+- Supports **separate Start and accent colour control** using palette logic  
+- Generates and applies a valid **AccentPalette** to ensure consistent rendering  
+- Executes in **user context** (no administrative privileges required)  
+- Optimised for **FSLogix, first logon, and non-persistent environments**  
+- Uses a **completion marker** to prevent unnecessary reapplication  
+- Supports a `-force` flag to **override and reapply settings on demand**  
+- Allows custom configuration via `-ini` argument  (only values set in the ini are written to the relevant registry keys)
+- Writes **per-user logs** for visibility and troubleshooting  
+- Automatically creates required directories (e.g. ProgramData config path)  
+- Triggers **Windows UI refresh events** to apply changes without reboot 
+- Delivered as a **fully standalone native C++ executable** (no scripting or external dependencies) 
+
+## 🧰 Development Prerequisites 
 
 ### Required Software
 
