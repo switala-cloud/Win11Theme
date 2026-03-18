@@ -1,7 +1,7 @@
 # Win11Theme
 Standalone Windows 11 utility that applies Start menu and accent colours from a configurable INI file. Designed for FSLogix and first-logon scenarios, with logging, idempotent execution, and optional force override. No PowerShell or external dependencies.
 
-## 🧰 Prerequisites to modify Windows 11 utility
+## 🧰 Prerequisites to modify utility
 
 ### Required Software
 
