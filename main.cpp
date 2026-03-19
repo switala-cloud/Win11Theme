@@ -590,6 +590,13 @@ namespace
 
     bool KillExplorerProcesses()
     {
+        DWORD currentSessionId = 0;
+        if (!ProcessIdToSessionId(GetCurrentProcessId(), &currentSessionId))
+        {
+            Log(L"ProcessIdToSessionId failed for current process: " + GetLastErrorString());
+            return false;
+        }
+
         HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if (snapshot == INVALID_HANDLE_VALUE)
         {
@@ -608,12 +615,28 @@ namespace
             {
                 if (_wcsicmp(pe.szExeFile, L"explorer.exe") == 0)
                 {
+                    DWORD explorerSessionId = 0;
+                    if (!ProcessIdToSessionId(pe.th32ProcessID, &explorerSessionId))
+                    {
+                        Log(L"ProcessIdToSessionId failed for explorer.exe PID " +
+                            std::to_wstring(pe.th32ProcessID) + L": " + GetLastErrorString());
+                        continue;
+                    }
+
+                    if (explorerSessionId != currentSessionId)
+                    {
+                        Log(L"Skipping explorer.exe PID " + std::to_wstring(pe.th32ProcessID) +
+                            L" because it belongs to another session.");
+                        continue;
+                    }
+
                     HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
                     if (hProc)
                     {
                         if (TerminateProcess(hProc, 0))
                         {
-                            Log(L"Terminated explorer.exe PID " + std::to_wstring(pe.th32ProcessID));
+                            Log(L"Terminated explorer.exe PID " + std::to_wstring(pe.th32ProcessID) +
+                                L" in current session.");
                             anyKilled = true;
                         }
                         else
@@ -641,7 +664,6 @@ namespace
         CloseHandle(snapshot);
         return anyKilled;
     }
-
     bool StartExplorer()
     {
         STARTUPINFOW si{};
