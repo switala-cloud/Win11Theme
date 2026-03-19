@@ -1,11 +1,13 @@
 #include <windows.h>
 #include <shlobj_core.h>
+#include <tlhelp32.h>
 #include <string>
 #include <vector>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <cwctype>
+
 
 #pragma comment(lib, "Shell32.lib")
 #pragma comment(lib, "User32.lib")
@@ -55,7 +57,6 @@ namespace
         { L"ExplorerAccent",    L"AccentColorMenu",            kExplorerAccentKey,    REG_DWORD  },
         { L"ExplorerAccent",    L"AccentPalette",              kExplorerAccentKey,    REG_BINARY },
         { L"ExplorerAccent",    L"StartColorMenu",             kExplorerAccentKey,    REG_DWORD  },
-        { L"ExplorerAccent",    L"UseNewAutoColorAccent",      kExplorerAccentKey,    REG_DWORD  },
 
         { L"ThemesPersonalize", L"AppsUseLightTheme",          kThemesPersonalizeKey, REG_DWORD  },
         { L"ThemesPersonalize", L"ColorPrevalence",            kThemesPersonalizeKey, REG_DWORD  },
@@ -65,10 +66,7 @@ namespace
         { L"DWM",               L"AccentColor",                kDwmKey,               REG_DWORD  },
         { L"DWM",               L"ColorizationAfterglow",      kDwmKey,               REG_DWORD  },
         { L"DWM",               L"ColorPrevalence",            kDwmKey,               REG_DWORD  },
-        { L"DWM",               L"Composition",                kDwmKey,               REG_DWORD  },
-        { L"DWM",               L"EnableWindowColorization",   kDwmKey,               REG_DWORD  },
         { L"DWM",               L"ColorizationColor",          kDwmKey,               REG_DWORD  },
-        { L"DWM",               L"ColorizationColorBalance",   kDwmKey,               REG_DWORD  }
     };
 
     std::wstring GetTimestamp()
@@ -394,6 +392,32 @@ namespace
         return !outValue.empty();
     }
 
+    bool ReadIniBool(const std::wstring& iniPath,
+                 const wchar_t* section,
+                 const wchar_t* key,
+                 bool defaultValue)
+    {
+        wchar_t buffer[64]{};
+        DWORD chars = GetPrivateProfileStringW(
+            section,
+            key,
+            defaultValue ? L"1" : L"0",
+            buffer,
+            static_cast<DWORD>(std::size(buffer)),
+            iniPath.c_str());
+
+        std::wstring value(buffer, chars);
+        value = ToLower(Trim(value));
+
+        if (value == L"1" || value == L"true" || value == L"yes" || value == L"on")
+            return true;
+
+        if (value == L"0" || value == L"false" || value == L"no" || value == L"off")
+            return false;
+
+        return defaultValue;
+    }
+
     bool TryParseHexDword(const std::wstring& text, DWORD& outValue)
     {
         std::wstring s = Trim(text);
@@ -564,6 +588,93 @@ namespace
         return true;
     }
 
+    bool KillExplorerProcesses()
+    {
+        HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (snapshot == INVALID_HANDLE_VALUE)
+        {
+            Log(L"CreateToolhelp32Snapshot failed: " + GetLastErrorString());
+            return false;
+        }
+
+        PROCESSENTRY32W pe{};
+        pe.dwSize = sizeof(pe);
+
+        bool anyKilled = false;
+
+        if (Process32FirstW(snapshot, &pe))
+        {
+            do
+            {
+                if (_wcsicmp(pe.szExeFile, L"explorer.exe") == 0)
+                {
+                    HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
+                    if (hProc)
+                    {
+                        if (TerminateProcess(hProc, 0))
+                        {
+                            Log(L"Terminated explorer.exe PID " + std::to_wstring(pe.th32ProcessID));
+                            anyKilled = true;
+                        }
+                        else
+                        {
+                            Log(L"Failed to terminate explorer.exe PID " +
+                                std::to_wstring(pe.th32ProcessID) + L": " + GetLastErrorString());
+                        }
+
+                        CloseHandle(hProc);
+                    }
+                    else
+                    {
+                        Log(L"OpenProcess failed for explorer.exe PID " +
+                            std::to_wstring(pe.th32ProcessID) + L": " + GetLastErrorString());
+                    }
+                }
+            }
+            while (Process32NextW(snapshot, &pe));
+        }
+        else
+        {
+            Log(L"Process32FirstW failed: " + GetLastErrorString());
+        }
+
+        CloseHandle(snapshot);
+        return anyKilled;
+    }
+
+    bool StartExplorer()
+    {
+        STARTUPINFOW si{};
+        si.cb = sizeof(si);
+
+        PROCESS_INFORMATION pi{};
+        wchar_t cmdLine[] = L"explorer.exe";
+
+        BOOL ok = CreateProcessW(
+            nullptr,
+            cmdLine,
+            nullptr,
+            nullptr,
+            FALSE,
+            0,
+            nullptr,
+            nullptr,
+            &si,
+            &pi);
+
+        if (!ok)
+        {
+            Log(L"Failed to start explorer.exe: " + GetLastErrorString());
+            return false;
+        }
+
+        Log(L"Started explorer.exe successfully.");
+
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        return true;
+    }
+
     bool FileExists(const std::wstring& path)
     {
         DWORD attrs = GetFileAttributesW(path.c_str());
@@ -678,6 +789,19 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
         return 4;
     }
 
+    bool forceExplorerRestart = ReadIniBool(configPath, L"General", L"ForceExplorerRestart", false);
+    Log(forceExplorerRestart
+        ? L"ForceExplorerRestart enabled in INI."
+        : L"ForceExplorerRestart disabled in INI.");
+
+    if (!FileExists(configPath))
+    {
+        Log(L"Config file not found.");
+        LogUsage();
+        Cleanup();
+        return 4;
+    }
+
     WaitForExplorer(20000);
 
     bool applyOk = ApplyAllConfigValues(configPath);
@@ -686,10 +810,21 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     BroadcastSettingChange(L"WindowsThemeElement");
     BroadcastSettingChange(L"Environment");
 
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
+
     Sleep(1500);
 
     BroadcastSettingChange(L"ImmersiveColorSet");
     BroadcastSettingChange(L"WindowsThemeElement");
+
+    if (forceExplorerRestart)
+    {
+        Log(L"ForceExplorerRestart is enabled. Restarting Explorer.");
+
+        KillExplorerProcesses();
+        Sleep(1500);
+        StartExplorer();
+    }
 
     if (applyOk)
     {
