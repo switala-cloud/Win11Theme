@@ -85,7 +85,6 @@ Registry path: HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent
 |AccentColorMenu	     |DWORD	|Main accent colour (UI highlights)              |
 |StartColorMenu          |DWORD	|Start menu/taskbar colour override              |
 |AccentPalette	          |BINARY	|Colour gradient used by Start/taskbar           |
-|UseNewAutoColorAccent	|DWORD	|Disable automatic accent selection (set to 0)   |
 
 **[ThemesPersonalize]**
 
@@ -108,9 +107,8 @@ Registry path:HKCU\Software\Microsoft\Windows\DWM
 |ColorizationAfterglow	|DWORD	|Glow/accent overlay                             |
 |ColorPrevalence	     |DWORD	|Enables window colour usage                     |
 |Composition	          |DWORD	|DWM composition setting                         |
-|EnableWindowColorization|DWORD	|Enables coloured window borders                 |
 |ColorizationColor	     |DWORD	|Base colour for window rendering                |
-|ColorizationColorBalance|DWORD	|Intensity of colour                             |
+
 
 ⚠️ **Note: DWM settings can override or interfere with Start/taskbar colours.
 It is recommended to omit this section unless explicitly required.**
