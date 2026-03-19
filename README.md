@@ -54,16 +54,25 @@ Standalone Windows 11 utility that applies Start menu and accent colours from a 
 
 ```ini
 [ExplorerAccent]
-AccentColorMenu=0xff7280fa
-StartColorMenu=0xff0000ff
-AccentPalette=ff,00,00,00,cc,00,00,00,99,00,00,00,66,00,00,00,44,00,00,00,22,00,00,00,11,00,00,00,ff,ff,ff
-UseNewAutoColorAccent=0x0
+AccentColorMenu=0xff5648e7
+StartColorMenu=0xff3829e3
+AccentPalette=fb,b4,b7,00,f3,8a,91,00,eb,5c,68,00,e7,48,56,00,e3,29,38,00,a6,16,1e,00,65,0d,0f,00,ff,8c,00,00
 
 [ThemesPersonalize]
 AppsUseLightTheme=0x1
-SystemUsesLightTheme=0x0
+SystemUsesLightTheme=0x1
 ColorPrevalence=0x1
 EnableTransparency=0x0
+
+[DWM]
+AccentColor=0xff5648e7
+ColorizationAfterglow=0xc4e74856
+ColorPrevalence=0x1
+EnableWindowColorization=0x1
+ColorizationColor=0xc4e74856
+
+[General]
+ForceExplorerRestart=1
 ```
 
 ### 🧾 INI Format Rules
